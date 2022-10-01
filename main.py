@@ -3,11 +3,13 @@ import win32clipboard
 import win32gui
 from PIL import ImageGrab
 from io import BytesIO
-
 from clipboard_data import ClipboardData, ImageClipboardData, TextClipboardData
 
-prev = ClipboardData('')
+# Config options
 sources = ['Adobe Acrobat Reader DC (32-bit)', 'Screen Snipping']
+image_max_width = 870
+
+prev = ClipboardData('')
 
 
 def get_current_window():
@@ -36,11 +38,10 @@ def get_clipboard_image():
     im = ImageGrab.grabclipboard()
     if im is None:
         return ClipboardData('')
-    max_width = 870
-    if im.width > max_width:
+    if im.width > image_max_width:
         ratio = im.width / im.height
-        height = int(max_width / ratio)
-        im = im.resize((max_width, height))
+        height = int(image_max_width / ratio)
+        im = im.resize((image_max_width, height))
     with BytesIO() as output:
         im.convert("RGB").save(output, "BMP")
         data = ImageClipboardData(output.getvalue()[14:])
