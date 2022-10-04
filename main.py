@@ -2,14 +2,15 @@ import time
 import win32clipboard
 import win32gui
 from PIL import ImageGrab
-from io import BytesIO
+
 from clipboard_data import ClipboardData, ImageClipboardData, TextClipboardData
 
 # Config options
-sources = ['Adobe Acrobat Reader DC (32-bit)', 'Screen Snipping']
-image_max_width = 870
+sources = ['Screen Snipping']
+source_endings = ['Adobe Acrobat Reader DC (32-bit)']
 
-prev = ClipboardData('')
+# Used for checking if the clipboard has been updated
+sequence_number = -1
 
 
 def get_current_window():
@@ -17,7 +18,8 @@ def get_current_window():
 
 
 def is_copied_from_selected_source():
-    return get_current_window() in sources or 'ANY' in sources
+    current_window = get_current_window()
+    return current_window in sources or any(current_window.endswith(source) for source in source_endings) or 'ANY' in sources
 
 
 def get_clipboard_data():
@@ -38,31 +40,40 @@ def get_clipboard_image():
     im = ImageGrab.grabclipboard()
     if im is None:
         return ClipboardData('')
-    if im.width > image_max_width:
-        ratio = im.width / im.height
-        height = int(image_max_width / ratio)
-        im = im.resize((image_max_width, height))
-    with BytesIO() as output:
-        im.convert("RGB").save(output, "BMP")
-        data = ImageClipboardData(output.getvalue()[14:])
-    return data
+    return ImageClipboardData(im)
 
 
 def process_clipboard():
-    global prev
-    clipboard_data = get_clipboard_data()
-    if clipboard_data.content == '' or prev.content == clipboard_data.content:
-        return
+    global sequence_number
 
-    prev = clipboard_data
+    # Check if the clipboard has been updated
+    new_sequence_number = win32clipboard.GetClipboardSequenceNumber()
+    if sequence_number == new_sequence_number:
+        if sequence_number != -1:
+            return
+
+    sequence_number = new_sequence_number
+
     if not is_copied_from_selected_source():
         return
+
+    print('Processing clipboard')
+
+    clipboard_data = get_clipboard_data()
+    if clipboard_data.content == '' or clipboard_data.content is None:
+        return
+
     clipboard_data.format_content()
     if clipboard_data.replace_clipboard():
-        prev = clipboard_data
+        print('Clipboard formatted and replaced')
+        sequence_number = win32clipboard.GetClipboardSequenceNumber()  # Update sequence number as it has changed during processing
+    else:
+        print('Failed to replace clipboard')
 
 
 if __name__ == '__main__':
     while True:
         process_clipboard()
         time.sleep(0.1)
+
+# TODO OCR to estimate text font in image and scale accordingly.

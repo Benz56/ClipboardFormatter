@@ -1,3 +1,5 @@
+from io import BytesIO
+
 import win32clipboard
 
 
@@ -16,11 +18,19 @@ class ClipboardData:
 
 
 class ImageClipboardData(ClipboardData):
+    image_max_width = 870
+
     def __init__(self, content):
         super().__init__(content)
 
     def format_content(self):
-        pass  # Preformatted when retrieved from clipboard.
+        if self.content.width > self.image_max_width:
+            ratio = self.content.width / self.content.height
+            height = int(self.image_max_width / ratio)
+            self.content = self.content.resize((self.image_max_width, height))
+        with BytesIO() as output:
+            self.content.convert("RGB").save(output, "BMP")
+            self.content = output.getvalue()[14:]
 
     def replace_clipboard(self):
         try:
