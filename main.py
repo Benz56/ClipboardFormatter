@@ -71,7 +71,7 @@ def process_clipboard():
     if not is_copied_from_selected_source():
         return
 
-    print('Processing clipboard')
+    print('Processing clipboard from source: {}'.format(' || '.join(get_current_windows())))
 
     clipboard_data = get_clipboard_data()
     if clipboard_data.content == '' or clipboard_data.content is None:
