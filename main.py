@@ -2,24 +2,30 @@ import time
 import win32clipboard
 import win32gui
 from PIL import ImageGrab
+from pyxtension.streams import stream
 
 from clipboard_data import ClipboardData, ImageClipboardData, TextClipboardData
 
 # Config options
-sources = ['Screen Snipping']
-source_endings = ['Adobe Acrobat Reader DC (32-bit)']
+full_sources = []
+in_sources = ['Chrome']
+ending_sources = ['Adobe Acrobat Reader DC (32-bit)']
 
 # Used for checking if the clipboard has been updated
 sequence_number = -1
 
 
-def get_current_window():
-    return win32gui.GetWindowText(win32gui.GetForegroundWindow())
+def get_current_windows():
+    """Returns both the active window and the window under the cursor"""
+    return win32gui.GetWindowText(win32gui.GetForegroundWindow()), win32gui.GetWindowText(win32gui.WindowFromPoint(win32gui.GetCursorPos()))
 
 
 def is_copied_from_selected_source():
-    current_window = get_current_window()
-    return current_window in sources or any(current_window.endswith(source) for source in source_endings) or 'ANY' in sources
+    current_windows = get_current_windows()
+    full_source_match = stream(current_windows).exists(lambda current_window: current_window in full_sources)
+    in_source_match = stream(current_windows).exists(lambda current_window: stream(in_sources).exists(lambda source: source in current_window))
+    ending_source_match = stream(current_windows).exists(lambda current_window: stream(ending_sources).exists(lambda source: current_window.endswith(source)))
+    return full_source_match or in_source_match or ending_source_match or 'ANY' in full_sources
 
 
 def get_clipboard_data():
@@ -43,6 +49,12 @@ def get_clipboard_image():
     return ImageClipboardData(im)
 
 
+def wait_for_screen_snipping_to_finish():
+    if 'Screen Snipping' in get_current_windows():
+        time.sleep(0.01)
+        wait_for_screen_snipping_to_finish()
+
+
 def process_clipboard():
     global sequence_number
 
@@ -53,6 +65,8 @@ def process_clipboard():
             return
 
     sequence_number = new_sequence_number
+
+    wait_for_screen_snipping_to_finish()
 
     if not is_copied_from_selected_source():
         return
