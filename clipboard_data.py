@@ -59,7 +59,7 @@ class TextClipboardData(ClipboardData):
 
     def format_content(self):
         def remove_newlines(text):
-            return text.replace("\r", "").replace("\n", "")
+            return text.replace('\r', '').replace('\n', ' ')
 
         self.content = remove_newlines(self.content)
 
