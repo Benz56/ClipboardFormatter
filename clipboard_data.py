@@ -3,6 +3,7 @@ import traceback
 from io import BytesIO
 
 import win32clipboard
+from PIL import Image, ImageChops
 
 
 class ClipboardData:
@@ -41,10 +42,19 @@ class ImageClipboardData(ClipboardData):
         super().__init__(content)
 
     def format_content(self):
+        # Trim white borders from image
+        self.content = self.content.convert('RGB')
+        bg = Image.new(self.content.mode, self.content.size, self.content.getpixel((0, 0)))
+        diff = ImageChops.difference(self.content, bg)
+        self.content = self.content.crop(diff.getbbox())
+
+        # Resize image if it's too big
         if self.content.width > self.image_max_width:
             ratio = self.content.width / self.content.height
             height = int(self.image_max_width / ratio)
             self.content = self.content.resize((self.image_max_width, height))
+
+        # Convert image to bytes
         with BytesIO() as output:
             self.content.convert("RGB").save(output, "BMP")
             self.content = output.getvalue()[14:]
