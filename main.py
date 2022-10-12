@@ -7,7 +7,7 @@ from pyxtension.streams import stream
 from clipboard_data import ClipboardData, ImageClipboardData, TextClipboardData
 
 # Config options
-full_sources = []
+full_sources = ['AVPageView']
 in_sources = ['Chrome']
 ending_sources = ['Adobe Acrobat Reader DC (32-bit)']
 
@@ -69,12 +69,20 @@ def process_clipboard():
     wait_for_screen_snipping_to_finish()
 
     if not is_copied_from_selected_source():
+        print('Not copied from selected source. Source is {}'.format(get_current_windows()))
         return
 
     print('Processing clipboard from source: {}'.format(' || '.join(get_current_windows())))
 
-    clipboard_data = get_clipboard_data()
-    if clipboard_data.content == '' or clipboard_data.content is None:
+    clipboard_data = None
+    for tries in range(3):
+        clipboard_data = get_clipboard_data()
+        if clipboard_data.content != '' and clipboard_data.content is not None:
+            break
+        print("Clipboard is empty. Retrying...")
+        time.sleep(0.1)
+    else:
+        print("Clipboard is empty!")
         return
 
     clipboard_data.format_content()
