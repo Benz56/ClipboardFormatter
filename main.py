@@ -15,9 +15,9 @@ ending_sources = ['Adobe Acrobat Reader DC (32-bit)']
 sequence_number = -1
 
 
-def get_current_windows():
+def get_current_windows(cursor_pos=win32gui.GetCursorPos()):
     """Returns both the active window and the window under the cursor"""
-    return win32gui.GetWindowText(win32gui.GetForegroundWindow()), win32gui.GetWindowText(win32gui.WindowFromPoint(win32gui.GetCursorPos()))
+    return win32gui.GetWindowText(win32gui.GetForegroundWindow()), win32gui.GetWindowText(win32gui.WindowFromPoint(cursor_pos))
 
 
 def is_copied_from_selected_source():
@@ -66,15 +66,15 @@ def process_clipboard():
 
     sequence_number = new_sequence_number
 
+    cursor_pos = win32gui.GetCursorPos()  # Get current cursor position before potential wait in the next line
     wait_for_screen_snipping_to_finish()
 
     if not is_copied_from_selected_source():
-        print('Not copied from selected source. Source is {}'.format(get_current_windows()))
+        print('Not copied from selected source. Source is {}'.format(get_current_windows(cursor_pos)))
         return
 
-    print('Processing clipboard from source: {}'.format(' || '.join(get_current_windows())))
+    print('Processing clipboard from source: {}'.format(' || '.join(get_current_windows(cursor_pos))))
 
-    clipboard_data = None
     for tries in range(3):
         clipboard_data = get_clipboard_data()
         if clipboard_data.content != '' and clipboard_data.content is not None:
