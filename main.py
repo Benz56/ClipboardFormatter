@@ -20,8 +20,7 @@ def get_current_windows(cursor_pos=win32gui.GetCursorPos()):
     return win32gui.GetWindowText(win32gui.GetForegroundWindow()), win32gui.GetWindowText(win32gui.WindowFromPoint(cursor_pos))
 
 
-def is_copied_from_selected_source():
-    current_windows = get_current_windows()
+def is_copied_from_selected_source(current_windows):
     full_source_match = stream(current_windows).exists(lambda current_window: current_window in full_sources)
     in_source_match = stream(current_windows).exists(lambda current_window: stream(in_sources).exists(lambda source: source in current_window))
     ending_source_match = stream(current_windows).exists(lambda current_window: stream(ending_sources).exists(lambda source: current_window.endswith(source)))
@@ -68,12 +67,13 @@ def process_clipboard():
 
     cursor_pos = win32gui.GetCursorPos()  # Get current cursor position before potential wait in the next line
     wait_for_screen_snipping_to_finish()
+    current_windows = get_current_windows(cursor_pos)
 
-    if not is_copied_from_selected_source():
-        print('Not copied from selected source. Source is {}'.format(get_current_windows(cursor_pos)))
+    if not is_copied_from_selected_source(current_windows):
+        print('Not copied from selected source. Source is {}'.format(current_windows))
         return
 
-    print('Processing clipboard from source: {}'.format(' || '.join(get_current_windows(cursor_pos))))
+    print('Processing clipboard from source: {}'.format(' || '.join(current_windows)))
 
     for tries in range(3):
         clipboard_data = get_clipboard_data()
