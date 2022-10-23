@@ -8,4 +8,4 @@ Specify which windows you want formatting to be applied to in main.py.
 
 ## Screenshot Features
 - Resizes your image to a specified width maintaining the aspect ratio.
-- Removes the white border from the screenshot if it exists. Especially useful for screenshots taking on a white background e.g. Chrome or Adobe Reader.
+- Removes any border from the screenshot if it exists. Especially useful for screenshots taking on a white background e.g. Chrome or Adobe Reader.

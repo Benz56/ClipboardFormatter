@@ -42,7 +42,7 @@ class ImageClipboardData(ClipboardData):
         super().__init__(content)
 
     def format_content(self):
-        # Trim white borders from image
+        # Trim borders from image. Border color is based on the top left pixel.
         self.content = self.content.convert('RGB')
         bg = Image.new(self.content.mode, self.content.size, self.content.getpixel((0, 0)))
         diff = ImageChops.difference(self.content, bg)
